@@ -80,24 +80,30 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
             if(lsd_sum > 9):
                 lsd_sum -= 10
                 msd_sum += 1
-            reg_sum_LSD.next = lsd_sum
-            reg_sum_MSD.next = msd_sum
+
             if (msd_sum > 9):
+                msd_sum -= 10
                 overflow.next = True
             else:
                 overflow.next = False
+
+            reg_sum_LSD.next = lsd_sum
+            reg_sum_MSD.next = msd_sum
         else:
             lsd_sum = reg_A_LSD - reg_B_LSD
             msd_sum = reg_A_MSD - reg_B_MSD
             if(lsd_sum < 0):
                 lsd_sum += 10
                 msd_sum -= 1
-            reg_sum_LSD.next = lsd_sum
-            reg_sum_MSD.next = msd_sum
+
             if (msd_sum < 0):
+                msd_sum += 10
                 overflow.next = True
             else:
                 overflow.next = False
+
+            reg_sum_LSD.next = lsd_sum
+            reg_sum_MSD.next = msd_sum
 
     bcd_to_hex5 = bcd_to_hex(reg_A_MSD, hex_disp5)
     bcd_to_hex4 = bcd_to_hex(reg_A_LSD, hex_disp4)
