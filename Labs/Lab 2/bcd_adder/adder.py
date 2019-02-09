@@ -10,7 +10,8 @@ def bcd_latch(D1, D2, E, Q1, Q2):
 
     return logic
 
-@block 
+
+@block
 def bcd_to_hex(bcd, hex_disp):
     @always(bcd)
     def display():
@@ -41,7 +42,6 @@ def bcd_to_hex(bcd, hex_disp):
 
 
 @block
-#def adder(MSD, LSD, key_A, key_B, sw_add, hex_displays):
 def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
           hex_disp0, hex_disp1, hex_disp2,
           hex_disp3, hex_disp4, hex_disp5):
@@ -58,7 +58,6 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
 
     latch_A = bcd_latch(reg_in_MSD, reg_in_LSD, key_A, reg_A_MSD, reg_A_LSD)
     latch_B = bcd_latch(reg_in_MSD, reg_in_LSD, key_B, reg_B_MSD, reg_B_LSD)
-
 
     @always(MSD, LSD)
     def constrain():
@@ -85,6 +84,8 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
             reg_sum_MSD.next = msd_sum
             if (msd_sum > 9):
                 overflow.next = True
+            else:
+                overflow.next = False
         else:
             lsd_sum = reg_A_LSD - reg_B_LSD
             msd_sum = reg_A_MSD - reg_B_MSD
@@ -95,7 +96,8 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
             reg_sum_MSD.next = msd_sum
             if (msd_sum < 0):
                 overflow.next = True
-
+            else:
+                overflow.next = False
 
     bcd_to_hex5 = bcd_to_hex(reg_A_MSD, hex_disp5)
     bcd_to_hex4 = bcd_to_hex(reg_A_LSD, hex_disp4)
@@ -104,7 +106,7 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
     bcd_to_hex1 = bcd_to_hex(reg_sum_MSD, hex_disp1)
     bcd_to_hex0 = bcd_to_hex(reg_sum_LSD, hex_disp0)
 
-    return (logic, constrain, latch_A, latch_B, 
+    return (logic, constrain, latch_A, latch_B,
             bcd_to_hex0, bcd_to_hex1, bcd_to_hex2,
             bcd_to_hex3, bcd_to_hex4, bcd_to_hex5)
 
