@@ -26,9 +26,9 @@ def adder(num, key_A, key_B, sw_add, leds):
 
 def convert_inst(hdl):
     num = Signal(intbv(0)[8:])
-    key_A = Signal(intbv(0)[1:])
-    key_B = Signal(intbv(0)[1:])
-    sw_add = Signal(intbv(0)[1:])
+    key_A = Signal(bool(0))
+    key_B = Signal(bool(0))
+    sw_add = Signal(bool(0))
     leds = Signal(intbv(0)[9:])
 
     inst = adder(num, key_A, key_B, sw_add, leds)
