@@ -75,8 +75,8 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
     def logic():
 
         if(sw_add):
-            lsd_sum = reg_A_LSD + reg_B_LSD
-            msd_sum = reg_A_MSD + reg_B_MSD
+            lsd_sum = int(reg_A_LSD) + int(reg_B_LSD)
+            msd_sum = int(reg_A_MSD) + int(reg_B_MSD)
             if(lsd_sum > 9):
                 lsd_sum -= 10
                 msd_sum += 1
@@ -90,8 +90,8 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
             reg_sum_LSD.next = lsd_sum
             reg_sum_MSD.next = msd_sum
         else:
-            lsd_sum = reg_A_LSD - reg_B_LSD
-            msd_sum = reg_A_MSD - reg_B_MSD
+            lsd_sum = int(reg_A_LSD) - int(reg_B_LSD)
+            msd_sum = int(reg_A_MSD) - int(reg_B_MSD)
             if(lsd_sum < 0):
                 lsd_sum += 10
                 msd_sum -= 1
@@ -120,10 +120,10 @@ def adder(MSD, LSD, key_A, key_B, sw_add, overflow,
 def convert_inst(hdl):
     MSD = Signal(intbv(0)[4:])
     LSD = Signal(intbv(0)[4:])
-    key_A = Signal(intbv(0)[1:])
-    key_B = Signal(intbv(0)[1:])
-    sw_add = Signal(intbv(0)[1:])
-    overflow = Signal(intbv(0)[1:])
+    key_A = Signal(bool(0))
+    key_B = Signal(bool(0))
+    sw_add = Signal(bool(0))
+    overflow = Signal(bool(0))
     hex_displays = tuple([Signal(intbv(0)[7:]) for _ in range(6)])
 
     inst = adder(MSD, LSD, key_A, key_B, sw_add, overflow,
