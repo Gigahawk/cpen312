@@ -6,26 +6,26 @@ from bcd_counter import bcd_counter
 
 class TestBCDCounter(unittest.TestCase):
     def test_increment(self):
-        def test(clk, rst, dout0, dout1, din0, din1, ld, carry_out, max_val):
+        def test(clk, rst, dout0, dout1, din0, din1, ld, carry_out, min_val, max_val):
             print()
-            print(f'max_val = {max_val}')
+            print(f'min_val = {min_val}, max_val = {max_val}')
             print('clock dout0 dout1 expected_output')
             print(f'{int(clk)} {dout0} {dout1} 0')
 
             for i in range(150):
                 clk.next = not clk
                 yield delay(10)
-                print(f'{int(clk)} {dout0} {dout1} {(i+1)//2 % (max_val+1)}')
+                print(f'{int(clk)} {dout0} {dout1} {(i+1)//2 % (max_val - min_val +1) + min_val}')
                 if not clk:
-                    self.assertEqual((i+1)//2 % (max_val + 1),
+                    self.assertEqual((i+1)//2 % (max_val - min_val + 1) + min_val,
                                      10*dout1 + dout0)
 
         self.run_test(test)
 
     def test_reset(self):
-        def test(clk, rst, dout0, dout1, din0, din1, ld, carry_out, max_val):
+        def test(clk, rst, dout0, dout1, din0, din1, ld, carry_out, min_val, max_val):
             print()
-            print(f'max_val = {max_val}')
+            print(f'min_val = {min_val}, max_val = {max_val}')
             print('clock dout0 dout1 reset')
             print(f'{int(clk)} {dout0} {dout1} 0')
             for i in range(1000):
@@ -35,7 +35,8 @@ class TestBCDCounter(unittest.TestCase):
                 yield delay(10)
                 print(f'{int(clk)} {dout0} {dout1} {int(rst)}')
                 if not rst:
-                    self.assertEqual(0, dout0)
+                    self.assertEqual(min_val % 10, dout0)
+                    self.assertEqual(min_val // 10, dout1)
 
         self.run_test(test)
 
@@ -48,16 +49,16 @@ class TestBCDCounter(unittest.TestCase):
         carry_out = Signal(bool(0))
 
         inst = bcd_counter(clk, rst, dout[0], dout[1], din[0], din[1],
-                           ld, carry_out, max_val=59)
+                           ld, carry_out, min_val=0, max_val=59)
         check = test(clk, rst, dout[0], dout[1], din[0], din[1],
-                     ld, carry_out, 59)
+                     ld, carry_out, 0, 59)
         sim = Simulation(inst, check)
         sim.run(quiet=1)
 
         inst = bcd_counter(clk, rst, dout[0], dout[1], din[0], din[1],
-                           ld, carry_out, max_val=12)
+                           ld, carry_out, min_val=1, max_val=12)
         check = test(clk, rst, dout[0], dout[1], din[0], din[1],
-                     ld, carry_out, 12)
+                     ld, carry_out, 1, 12)
         sim = Simulation(inst, check)
         sim.run(quiet=1)
 

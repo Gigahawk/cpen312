@@ -1,55 +1,35 @@
-from myhdl import block, Signal, always, intbv
-from ring_counter import ring_counter
+from myhdl import block, Signal, always, intbv, modbv
+from math import log2, ceil
 
 
 @block
 def bcd_counter(clk, rst, dout0, dout1, din0, din1,
                 ld, carry_out, min_val=0, max_val=59):
-    carry = Signal(bool(0))
-    one_rst = Signal(bool(1))
-    one_rst_trigger = Signal(bool(1))
-    din_0 = Signal(intbv(0, min=0, max=2**4))
-    din_1 = Signal(intbv(0, min=0, max=2**4))
-    dout_0 = Signal(intbv(0, min=0, max=2**4))
-    dout_1 = Signal(intbv(0, min=0, max=2**4))
 
+    val = Signal(modbv(min_val, min=0, max=2**ceil(log2(max_val))))
 
-    @always(din0)
-    def update_din_0():
-        din_0.next = din0
+    @always(clk, rst, ld)
+    def logic():
+        carry_out.next = 0
+        if not rst:
+            val.next = min_val
+        elif not ld:
+            ld_val = din1*10 + din0
+            if ld_val > max_val:
+                ld_val = max_val
+            val.next = ld_val
+        elif clk:
+            val.next = val + 1
+            if val.next > max_val:
+                val.next = min_val
+                carry_out.next = 1
 
-    @always(din1)
-    def update_din_1():
-        din_1.next = din1
+    @always(val)
+    def set_output():
+        dout0.next = val % 10
+        dout1.next = val // 10
 
-    @always(dout_0)
-    def update_dout_0():
-        dout0.next = dout_0
-
-    @always(dout_1)
-    def update_dout_1():
-        dout1.next = dout_1
-
-    @always(rst, one_rst_trigger)
-    def internal_reset():
-        one_rst.next = rst & one_rst_trigger
-
-    @always(clk)
-    def roll_counter():
-        if clk:
-            if ((dout1.val*10 - (max_val//10*10)) == 0 and
-                    dout0.val == (max_val % 10)):
-                one_rst_trigger.next = False
-        else:
-            one_rst_trigger.next = True
-
-    counter0 = ring_counter(clk, one_rst, dout_0, din_0,
-                            ld, carry, max_val=9)
-    counter1 = ring_counter(carry, one_rst, dout_1, din_1,
-                            ld, carry_out, max_val=max_val//10)
-
-    return (counter0, counter1, roll_counter, internal_reset,
-            update_din_0, update_din_1, update_dout_0, update_dout_1)
+    return set_output, logic
 
 
 def convert_inst(hdl):
