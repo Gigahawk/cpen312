@@ -54,11 +54,3 @@ def convert_inst(hdl):
 
 if __name__ == '__main__':
     convert_inst('Verilog')
-    convert_inst('VHDL')
-
-
-
-
-
-
-
