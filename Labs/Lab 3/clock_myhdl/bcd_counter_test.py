@@ -40,6 +40,34 @@ class TestBCDCounter(unittest.TestCase):
 
         self.run_test(test)
 
+    def test_load(self):
+        def test(clk, rst, dout0, dout1, din0, din1, ld, carry_out, min_val, max_val):
+            print()
+            print(f'min_val = {min_val}, max_val = {max_val}')
+            print('clock dout0 dout1 din0 din1 load expected ld_in')
+            print(f'{int(clk)} {dout0} {dout1} {din0} {din1} 0 0 0')
+            for i in range(1000):
+                ld_in = randint(0, 99)
+                if ld_in < min_val:
+                    expected = min_val
+                elif ld_in > max_val:
+                    expected = max_val
+                else:
+                    expected = ld_in
+
+                din0.next = ld_in % 10
+                din1.next = ld_in // 10
+                yield delay(10)
+                clk.next = not clk
+                if not randint(0, 10):
+                    ld.next = not ld
+                yield delay(10)
+                print(f'{int(clk)} {dout0} {dout1} {din0} {din1} {int(ld)} {expected} {ld_in}')
+                if not ld:
+                    self.assertEqual(expected, dout0 + dout1*10)
+
+        self.run_test(test)
+
     def run_test(self, test):
         clk = Signal(bool(0))
         rst = Signal(bool(1))
