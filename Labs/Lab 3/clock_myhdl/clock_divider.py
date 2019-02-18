@@ -3,7 +3,7 @@ from math import log2, ceil
 
 
 @block
-def clock_divider(clk, out, in_freq=50*10**6, out_freq=1):
+def clock_divider(clk, clk_out, in_freq=50*10**6, out_freq=1):
     max_count = int(in_freq / (out_freq*2))
     count = Signal(modbv(0, min=0, max=2**ceil(log2(max_count))))
 
@@ -12,7 +12,7 @@ def clock_divider(clk, out, in_freq=50*10**6, out_freq=1):
         count.next = count + 1
         if count.next > max_count:
             count.next = 0
-            out.next = not out
+            clk_out.next = not clk_out
 
     return logic
 
@@ -21,7 +21,7 @@ def convert_inst(hdl):
     clk = Signal(bool(0))
     out = Signal(bool(0))
 
-    inst = clock_divider(clk, out)
+    inst = clock_divider(clk, out, out_freq=1)
 
     inst.convert(hdl=hdl, name='clock_divider')
 
