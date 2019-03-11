@@ -6,6 +6,8 @@ TIMER_MIN_LOW EQU #01
 ; as if Jesus made the timer run twice as fast
 TIMER_COUNTS EQU #40
 
+MICROTRANSACTIONS EQU EA
+
 ljmp init
 
 org 000BH ; Timer 0 Interrupt Address
@@ -13,7 +15,8 @@ org 000BH ; Timer 0 Interrupt Address
 
 org 40H
 isr_handler:
-    mov R7, A ; Preserve value of accumulator
+    ; Preserve value of accumulator
+    mov R7, A
     lcall reset_timer_val
     dec B
     mov A, B
@@ -22,16 +25,13 @@ isr_handler:
     reti
 timer_finish:
     lcall reset_timer_count
-    cpl LEDRA.7
-;    ; Swap out return address for update function
-;    pop 0FFH ; Dump old return address somewhere
-;    push 79H ; Can't push register, use literal address
+    ; Set display update bit
     setb 30H
+    ; Restore value in accumulator
     mov A, R7
     reti
 
 init:
-    cpl LEDRA.4
     mov SP, #7FH
     ; Turn off all LEDs
     mov LEDRA, #0
@@ -39,7 +39,7 @@ init:
     mov LEDRC, #0
     mov LEDG, #0
     ; Enable interrupts
-    SETB EA
+    SETB MICROTRANSACTIONS
     ; Enable Timer 0 ISR
     SETB ET0
     ; Initialize Timer
@@ -55,12 +55,12 @@ init:
 
 
 main:
-    cpl LEDRA.3
     ; Mask KEY3 into accumulator
     mov A, KEY
     anl A, #1000b
     ; Clear button pressed flag if button is no longer pressed
     lcall check_btn_flag
+    ; Check for falling edge of button
     orl A, 20H
     anl A, #1001b
     ; Jump to selector if first time pressing button
@@ -74,69 +74,74 @@ check_btn_flag:
 pressed:
     ret
 
+; Jump to last picked animation routine
 run_update:
     clr 30H
     mov dptr, #0
     mov A, R6
     jmp @A+dptr
-    
 
 select:
-    cpl LEDRA.2
     mov A, SWA
     anl A, #00000111b
 
+    ; Reset animation state
     mov R2, #0
 
     ; Set button pressed flag
     mov 20H, #1
 
+    ; 000
     mov R6, #six_msd
     jz six_msd
 
+    ; 001
     dec A
     mov R6, #two_lsd
     jz two_lsd
 
+    ; 010
     dec A
     mov R6, #rot_left
     jz rot_left
 
+    ; 011
     dec A
     mov R6, #rot_right
     jz rot_right
 
+    ; 100
     dec A
     mov R6, #blink_lsd
     jz blink_lsd
 
+    ; 101
     dec A
     mov R6, #inc_disp
     jz inc_disp
 
+    ; 110
     dec A
     mov R6, #hello_cpen
     jz hello_cpen
 
+    ; 111
     dec A
     mov R6, #unique
     jz unique
 
+    ; Jump back to main just in case
     sjmp main
 
 ; Display the six most significant digits of your student number
 ; using HEX5 down to HEX0
 six_msd:
-    cpl LEDRA.6
-    ;mov LEDRA, #00001000b
     lcall six_msd_logic
     ljmp main
 
 ; Display the two least significant digits of your student number
 ; using HEX1 and HEX0. Keep HEX5 down to HEX2 blank.
 two_lsd:
-    cpl LEDRA.5
-    ;mov LEDRA, #00001001b
     lcall two_lsd_logic
     ljmp main
 
@@ -144,7 +149,6 @@ two_lsd:
 ; number, scroll one digit to the left every second.  This should
 ; keep going forever until the selection for SW2 down to SW0 is changed
 rot_left:
-    ;mov LEDRA, #00001010b
     lcall rot_left_logic
     ljmp main
 
@@ -153,7 +157,6 @@ rot_left:
 ; right every second. This should keep going forever until the
 ; selection for SW2 down to SW0 is changed.
 rot_right:
-    ;mov LEDRA, #00001011b
     lcall rot_right_logic
     ljmp main
 
@@ -182,6 +185,9 @@ hello_cpen:
 
 ; Display your student number (or part of it) using a format of your
 ; own creation that is different from any of the formats required above.
+
+; I've chosen to utilize the extra hex display's to display my full
+; student number
 unique:
     lcall unique_logic
     ljmp main
@@ -242,15 +248,42 @@ WRITE_CPEN MAC
     mov HEX0, A
 ENDMAC
 
-six_msd_logic:
-    WRITE_DISP(#8, 7)
-    WRITE_DISP(#8, 6)
+WRITE_MSD MAC
     WRITE_DISP(#7, 5)
     WRITE_DISP(#6, 4)
     WRITE_DISP(#5, 3)
     WRITE_DISP(#4, 2)
     WRITE_DISP(#3, 1)
     WRITE_DISP(#2, 0)
+ENDMAC
+
+WRITE_LSD MAC
+    WRITE_DISP(#5, 5)
+    WRITE_DISP(#4, 4)
+    WRITE_DISP(#3, 3)
+    WRITE_DISP(#2, 2)
+    WRITE_DISP(#1, 1)
+    WRITE_DISP(#0, 0)
+ENDMAC
+
+CLR_AUX MAC
+    WRITE_DISP(#8, 7)
+    WRITE_DISP(#8, 6)
+ENDMAC
+
+CLR_DISP MAC
+    WRITE_DISP(#8, 5)
+    WRITE_DISP(#8, 4)
+    WRITE_DISP(#8, 3)
+    WRITE_DISP(#8, 2)
+    WRITE_DISP(#8, 1)
+    WRITE_DISP(#8, 0)
+ENDMAC
+
+
+six_msd_logic:
+    CLR_AUX
+    WRITE_MSD
     ret
 
 two_lsd_logic:
@@ -265,8 +298,7 @@ two_lsd_logic:
     ret
 
 rot_left_logic:
-    WRITE_DISP(#8, 7)
-    WRITE_DISP(#8, 6)
+    CLR_AUX
     mov A, #7
     ; Don't subtract carry bit
     clr C
@@ -300,8 +332,7 @@ rot_left_cntr_no_constrain:
     ret
 
 rot_right_logic:
-    WRITE_DISP(#8, 7)
-    WRITE_DISP(#8, 6)
+    CLR_AUX
     mov A, #7
     ; Don't subtract carry bit
     clr C
@@ -342,31 +373,19 @@ rot_no_constrain:
     ret
 
 blink_lsd_logic:
-    WRITE_DISP(#8, 7)
-    WRITE_DISP(#8, 6)
+    CLR_AUX
     mov A, R2
     anl A, #1b
     inc R2
     jz blink_show
-    WRITE_DISP(#8, 5)
-    WRITE_DISP(#8, 4)
-    WRITE_DISP(#8, 3)
-    WRITE_DISP(#8, 2)
-    WRITE_DISP(#8, 1)
-    WRITE_DISP(#8, 0)
+    CLR_DISP
     ret
 blink_show:
-    WRITE_DISP(#5, 5)
-    WRITE_DISP(#4, 4)
-    WRITE_DISP(#3, 3)
-    WRITE_DISP(#2, 2)
-    WRITE_DISP(#1, 1)
-    WRITE_DISP(#0, 0)
+    WRITE_LSD
     ret
 
 inc_disp_logic:
-    WRITE_DISP(#8, 7)
-    WRITE_DISP(#8, 6)
+    CLR_AUX
     mov A, R2
     inc R2
     jz inc_clr
@@ -401,17 +420,11 @@ inc_draw_6:
     WRITE_DISP(#2, 0)
     ret
 inc_clr:
-    WRITE_DISP(#8, 5)
-    WRITE_DISP(#8, 4)
-    WRITE_DISP(#8, 3)
-    WRITE_DISP(#8, 2)
-    WRITE_DISP(#8, 1)
-    WRITE_DISP(#8, 0)
+    CLR_DISP
     ret
 
 hello_cpen_logic:
-    WRITE_DISP(#8, 7)
-    WRITE_DISP(#8, 6)
+    CLR_AUX
     mov A, R2
     inc R2
     jz hello_cpen_hello
@@ -423,12 +436,7 @@ hello_cpen_hello:
     WRITE_HELLO
     ret
 hello_cpen_stuno:
-    WRITE_DISP(#7, 5)
-    WRITE_DISP(#6, 4)
-    WRITE_DISP(#5, 3)
-    WRITE_DISP(#4, 2)
-    WRITE_DISP(#3, 1)
-    WRITE_DISP(#2, 0)
+    WRITE_MSD
     ret
 hello_cpen_cpen:
     WRITE_CPEN
@@ -437,12 +445,7 @@ hello_cpen_cpen:
 unique_logic:
     WRITE_DISP(#7, 7)
     WRITE_DISP(#6, 6)
-    WRITE_DISP(#5, 5)
-    WRITE_DISP(#4, 4)
-    WRITE_DISP(#3, 3)
-    WRITE_DISP(#2, 2)
-    WRITE_DISP(#1, 1)
-    WRITE_DISP(#0, 0)
+    WRITE_LSD
     ret
 
 reset_timer_val:
@@ -463,6 +466,7 @@ sevenseg_lut:
 sevenseg_hello_lut:
     DB 089H, 086H, 0C7H     ; HEL
 
+WRITE_LSD
 sevenseg_cpen_lut:
     DB 0C6H, 08CH, 0C8H     ; CPN
 
