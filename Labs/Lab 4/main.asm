@@ -39,9 +39,9 @@ init:
     mov LEDRC, #0
     mov LEDG, #0
     ; Enable interrupts
-    SETB MICROTRANSACTIONS
+    setb MICROTRANSACTIONS
     ; Enable Timer 0 ISR
-    SETB ET0
+    setb ET0
     ; Initialize Timer
     lcall reset_timer_val
     lcall reset_timer_count
@@ -84,6 +84,12 @@ run_update:
 select:
     mov A, SWA
     anl A, #00000111b
+
+    ; Reset timer on new selection so that first frame of animation
+    ; lasts for 1s
+    clr 30H
+    lcall reset_timer_count
+    lcall reset_timer_val
 
     ; Reset animation state
     mov R2, #0
