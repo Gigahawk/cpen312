@@ -16,19 +16,19 @@ org 000BH ; Timer 0 Interrupt Address
 org 40H
 isr_handler:
     ; Preserve value of accumulator
-    mov R7, A
+    push ACC
     lcall reset_timer_val
     dec B
     mov A, B
     jz timer_finish
-    mov A, R7
+    pop ACC
     reti
 timer_finish:
     lcall reset_timer_count
     ; Set display update bit
     setb 30H
     ; Restore value in accumulator
-    mov A, R7
+    pop ACC
     reti
 
 init:
