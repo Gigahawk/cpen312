@@ -1,0 +1,17 @@
+| Address | Opcode/Operands | Instruction
+|---------+-----------------+-------------------------
+| 0000    |                 | cseg at 0000h
+| 0000    | C0D0            |          push psw
+| 0002    | C0E0            |          push acc
+| 0004    | C000            |          push 0h
+| 0006    | E9              |          mov a, r1
+| 0007    | 29              |          add a, r1
+| 0008    | 2432            |          add a, #32h
+| 000A    | F8              |          mov r0, a
+| 000B    |                 | L0001:
+| 000B    | D8FE            |          djnz r0, L0001
+| 000D    | D000            |          pop 0h
+| 000F    | D0E0            |          pop acc
+| 0011    | D0D0            |          pop psw
+| 0013    | 22              |          ret
+| 0014    |                 | end

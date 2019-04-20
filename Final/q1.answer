@@ -1,0 +1,30 @@
+| Address | Opcode/Operands | Instructions
+|---------+-----------------+--------------------------
+| 0030    |                 |         dseg at 30H
+| 0030    |                 | bcd:    ds 5
+| 0035    |                 | x:      ds 4
+| 1000    |                 |         cseg at 1000H
+| 1000    | E4              | h2b:    clr a
+| 1001    | F5 30           |         mov bcd+0, a
+| 1003    | F5 31           |         mov bcd+1, a
+| 1005    | F5 32           |         mov bcd+2, a
+| 1007    | F5 33           |         mov bcd+3, a
+| 1009    | F5 34           |         mov bcd+4, a
+| 100B    | 7A 20           |         mov r2, #32
+| 100D    | 79 04           | h2b_L0: mov r1, #4
+| 100F    | 78 35           |         mov r0, #(x+0)
+| 1011    | E6              | h2b_L1: mov a, @r0
+| 1012    | 33              |         rlc a
+| 1013    | F6              |         mov @r0, a
+| 1014    | 08              |         inc r0
+| 1015    | D9 FA           |         djnz r1, h2b_L1
+| 1017    | 79 05           |         mov r1, #5
+| 1019    | 78 30           |         mov r0, #(bcd+0)
+| 101B    | E6              | h2b_L2: mov a, @r0
+| 101C    | 36              |         addc a, @r0
+| 101D    | D4              |         da a
+| 101E    | F6              |         mov @r0, a
+| 101F    | 08              |         inc r0
+| 1020    | D9 F9           |         djnz r1, h2b_L2
+| 1022    | DA E9           |         djnz r2, h2b_L0
+| 1024    | 22              |         ret
