@@ -9,13 +9,17 @@ inc_ovf:
     ; (Unlikely to be a big deal but no real reason to not)
     push PSW
     push ACC
+    push AR0
     clr C
-    mov A, ovf_count+0
+    mov R0, #ovf_count
+    mov A, @R0
     addc A, #1
-    mov ovf_count+0, A
-    mov A, ovf_count+1
+    mov @R0, A
+    inc R0
+    mov A, @R0
     addc A, #0
-    mov ovf_count+1, A
+    mov @R0, A
+    pop AR0
     pop ACC
     pop PSW
     ret
