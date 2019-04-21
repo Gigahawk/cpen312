@@ -28,6 +28,26 @@ inc_ovf:
     pop PSW
     ret
 
+Init_counter_0:
+    clr EA              ; Disable interrupts
+    clr TR0             ; Stop counter 0
+    ; Note: original question sets Timer 0 as a counter
+    ; (mov TMOD, #05H), but I'm too lazy to attach an 
+    ; external clock, the internal clock will have to do
+    mov TMOD, #01H       ; Configure counter 0 in mode 1
+    clr TF0             ; Clear overflow flag
+    mov TH0, #0
+    mov TL0, #0
+    clr A
+    mov R0, #ovf_count
+    mov @R0, A          ; Clear overflow counter low
+    inc R0
+    mov @R0, A          ; Clear overflow counter high
+    setb TR0            ; Start counter 0
+    setb ET0            ; Enable counter 0 overflow interrupt
+    setb EA             ; Enable global interrupts
+    ret
+
 sevenseg_lut:
     DB 0C0H, 0F9H, 0A4H, 0B0H, 099H     ; 0 TO 4
     DB 092H, 082H, 0F8H, 080H, 090H     ; 5 TO 9
@@ -40,22 +60,13 @@ init:
     mov LEDRB, #0
     mov LEDRC, #0
     mov LEDG, #0
+    lcall Init_counter_0
     sjmp main
 
 main:
-    lcall disp
-    lcall wait
-    lcall inc_ovf
+	; Show value of ovf_count
+	lcall disp
     sjmp main
-
-wait:
-    mov R2, #10
-L3: mov R1, #250
-L2: mov R0, #250
-L1: djnz R0, L1
-    djnz R1, L2
-    djnz R2, L3
-    ret
 
 disp:
     mov dptr, #sevenseg_lut
@@ -80,7 +91,6 @@ disp:
     movc A, @A+dptr
     mov HEX3, A
     ret
-
 
 ISEG AT 07FH
 ovf_count: ds 2
