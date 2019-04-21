@@ -1,5 +1,7 @@
 $MODDE2
 
+ljmp init
+
 truth_table:
     db 0, 1, 1, 0
 
@@ -32,24 +34,63 @@ check_xor:
     mov P0MOD, #0xFF ; All of P0 is outputs
     mov P2MOD, #0x60 ; P2[0:4] is input, P2[5:6] is output
     orl P2, #0x60 ; Disable LEDs
+    ; Clear on board status indicators
+    mov LEDRB, #0
+    mov LEDG, #0
+    ; Show state 1
+    mov LEDRA, #0b1
 wait_press:
+    ; Show state 2
+    mov LEDRA, #0b10
     jb P2.4, wait_press
 wait_release:
+    ; Show state 3
+    mov LEDRA, #0b100
     jnb P2.4, wait_release
+    ; Show state 4
+    mov LEDRA, #0b1000
     setb P2.7 ; Power chip
     mov A, #4
 loop_zoop:
     dec A
     lcall acc2xor
+    mov R2, #30
+    lcall wait ; Wait for simulated chip
     lcall cmpxor
     jc invalid ; Bad chip if carry is set
     jnz loop_zoop
+    ; Show state 5
+    mov LEDRA, #0b10000
 valid:
     clr P2.5
+    mov LEDG, #1
     sjmp cleanup
 invalid:
     clr P2.6
+    mov LEDRB, #1
     sjmp cleanup
 cleanup:
-    clr P2.7 ; Turn off power to chip
-    mov P0, #0 ; Zero outputs
+    clr P2.7
+    mov P0, #0
+
+wait:
+L3: mov R1, #250
+L2: mov R0, #250
+L1: djnz R0, L1
+    djnz R1, L2
+    djnz R2, L3
+    ret
+
+init:
+    mov SP, #30H
+    mov LEDRA, #0
+    mov LEDRB, #0
+    mov LEDRC, #0
+    mov LEDG, #0
+    ljmp main
+
+main:
+    lcall check_xor
+    mov R2, #100
+    lcall wait
+    ljmp main
