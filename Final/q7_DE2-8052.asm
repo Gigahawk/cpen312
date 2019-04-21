@@ -3,7 +3,7 @@ $MODDE2
 ljmp init
 
 org 000BH
-    ljmp inc_ovf
+    lcall inc_ovf
     reti
 
 org 40H

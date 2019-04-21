@@ -1,6 +1,6 @@
 
 org 000BH
-    ljmp inc_ovf
+    lcall inc_ovf
     reti
 
 inc_ovf:
