@@ -14,9 +14,8 @@ acc2xor:
 cmpxor:
     push ACC
     movc A, @A+dptr ; Move answer into accumulator
-    mov B, #0xF
+    mov B, #0x0F
     mul AB ; Fill lower 4 bits with answer
-    orl A, #0xF0 ; Prevent underflow issues
     clr C
     subb A, P2
     clr C
