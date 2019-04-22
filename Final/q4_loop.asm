@@ -10,22 +10,18 @@ six_dig_sub:
     mov R0, #X
     mov R1, #Y
     mov dptr, #Z
+    mov R2, #3
     setb C ; Add extra 1
-    push PSW ; Don't underflow the stack
 loop_zoop:
-    pop PSW ; Preserve carry after CJNE
     mov A, #99H
-    ; Addition and subtraction are commutative,
-    ; but carrys must be added, so addc comes first
-    addc A, @R0
+    addc A, #0 ; Add and clear carry
     subb A, @R1
+    addc A, @R0
     da A
     movx @dptr, A ; Store answer
     ; Point stuff at next things
     inc R0
     inc R1
     inc dptr
-    push PSW ; Preserve carry after CJNE
-    cjne R0, #X+3, loop_zoop ; CJNE sets carry if R0 < #X+3
-    pop PSW ; Don't need no Flex Seal here
+    djnz R2, loop_zoop
     ret
